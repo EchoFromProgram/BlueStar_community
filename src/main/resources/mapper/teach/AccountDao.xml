@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bluestar.teach.dao.AccountDao">
+	
+	<!-- 根据返回的记录数，判断用户名存不存在(1存在，0不存在) -->
+	<select id="userNameIsExit" resultType="int">
+		SELECT COUNT(*) FROM user WHERE username = #{username}
+	</select>
+	
+	<!-- 根据用户名得到密码，角色id，姓名 -->
+	<select id="getUserByUserName" resultType="java.util.HashMap">
+		SELECT u.user_id, u.username, u.password, u.name, u.role_id, u.info_id, u.type_id, r.role
+		FROM user u, role r WHERE u.username = #{username} AND r.role_id = u.role_id
+	</select>
+	
+	<!-- 根据用户名得到密码，角色id，姓名 -->
+	<select id="getUserByUserNameForUpdate" resultMap="userData">
+		SELECT u.user_id, u.username, u.password, u.name, u.role_id, u.type_id, r.role , c.class_name, c.class_id
+		FROM user u, role r, user_class uc, class c WHERE u.username = #{username} AND r.role_id = u.role_id AND uc.user_id = u.user_id
+		AND uc.class_id = c.class_id
+	</select>
+	
+		<!-- 角色名和权限名的映射关系 -->
+	<resultMap type="com.bluestar.teach.entity.UserData" id="userData">
+		<id property="userId" column="user_id"/>
+		<result property="password" column="password"/>
+		<result property="name" column="name"/>
+		<result property="username" column="username"/>
+		<result property="role" column="role"/>
+		<result property="typeId" column="type_id"/>
+		<result property="roleId" column="role_id"/>
+		<collection property="classNames" ofType="com.bluestar.teach.entity.Clazz">
+            <result property="className" column="class_name" />
+            <result property="classId" column="class_id"/>
+        </collection>
+	</resultMap>
+	
+	<!-- 查询管理员 -->
+	<select id="getAdminByUserNameForUpdate" resultMap="userData">
+		SELECT u.user_id, u.username, u.password, u.name, u.role_id, u.type_id, r.role
+		FROM user u, role r WHERE u.username = #{username} AND r.role_id = u.role_id 
+	</select>
+	
+	<!-- 查询角色id和类型id -->
+	<select id="getTypeIdAndRoleId" resultType="com.bluestar.teach.entity.User">
+		SELECT u.role_id, u.type_id FROM user u WHERE u.username = #{username} 
+	</select>
+	
+	<!-- 根据用户名得到密码，角色id，姓名 -->
+	<select id="getUsersByTypeIdAndName" resultType="java.util.HashMap">
+		SELECT distinct u.user_id, u.username, u.password, u.name, u.role_id, u.info_id, u.type_id, r.role
+		FROM user u, role r
+		<where>
+			<if test="typeId != null">AND u.type_id = #{typeId}</if>
+ 			<if test="name != null">AND (u.name like '%${name}%' or u.username like '%${name}%')</if>
+			AND r.role_id = u.role_id
+		</where>
+	</select>
+	
+	<select id="getUsersNotByTypeId" resultType="java.util.HashMap">
+	SELECT u.user_id, u.username, u.password, u.name, u.role_id, u.info_id, u.type_id, r.role
+		FROM user u, role r  WHERE  r.role_id = u.role_id
+	</select>
+	
+	<!-- 创建一个新用户,插入到用户表中 -->
+	<insert id="insertIntoUser" useGeneratedKeys="true" keyProperty="userId">
+		INSERT INTO user(username, password, name, role_id, info_id, type_id)
+		VALUES(#{userName}, #{password}, #{name}, #{roleId}, #{infoId}, #{typeId})
+	</insert>
+	
+	<!-- 插入用户的班级 -->
+	<insert id="insertUserClass">
+		INSERT INTO user_class(user_id, class_id) VALUES
+		<foreach collection="classIds" item="classId" separator=",">
+			(#{userId}, #{classId})
+		</foreach>
+	</insert>
+	
+	<!-- 插入一条员工信息 -->
+	<insert id="insertIntoStaff"  useGeneratedKeys="true" keyProperty="tId">
+		INSERT INTO staff(identity_num, resume, qq, telephone, email)
+		VALUES(#{identityNum}, #{resume}, #{qq}, #{telephone}, #{email})
+	</insert>
+	
+	<!-- 插入一条客户信息 -->
+	<insert id="inserIntoCustomer" useGeneratedKeys="true" keyProperty="infoId">
+		INSERT INTO customer(identity_num, school, grade_major, qq, telephone, email, city, province)
+		VALUES(#{identityNum}, #{school}, #{gradeMajor}, #{qq}, #{telephone}, #{email}, #{city}, #{province})
+	</insert>
+	
+	<!-- 设置员工信息 -->
+	<update id="settingStaffInfo" >
+		UPDATE staff 
+		<set >
+		  <if test="identityNum != null">identity_num = #{identityNum},</if>
+		  <if test="resume != null">resume = #{resume},</if>
+		  <if test="qq != null">qq = #{qq},</if>
+		  <if test="telephone != null">telephone = #{telephone},</if>
+		  <if test="email != null">email = #{email},</if>
+ 		</set>
+ 		WHERE t_id = #{tId}
+	</update>
+	
+	<!-- 设置客户信息 -->
+	<update id="settingCustomerInfo" >
+		UPDATE customer 
+		<set>
+		  <if test="identityNum != null">identity_num = #{identityNum},</if>
+		  <if test="school != null">school = #{school},</if>
+		  <if test="gradeMajor != null">grade_major = #{gradeMajor},</if>
+		  <if test="telephone != null">telephone = #{telephone},</if>
+		  <if test="email != null">email = #{email},</if>
+		  <if test="qq != null">qq = #{qq},</if>
+		  <if test="city != null">city = #{city},</if>
+		  <if test="province != null">province = #{province},</if>
+ 		</set>
+ 		WHERE info_id = #{infoId}
+	</update>
+	
+	<!-- 根据信息id查询员工具体信息-->
+	<select id="getStaffDetailByTid" resultType="com.bluestar.teach.entity.Staff">
+		SELECT t_id,identity_num, resume, qq, telephone, email
+		FROM staff WHERE t_id = #{tId}
+	</select>
+	
+	<!-- 根据信息id查询客户具体信息-->
+	<select id="getCustomerDetailByInfoId" resultType="com.bluestar.teach.entity.Customer">
+		SELECT info_id,identity_num, school, qq, telephone, email, city, province, grade_major
+		FROM customer WHERE info_id = #{infoId} 
+	</select>
+	
+	
+	<!--根据角色id查询角色权限表，返回一个权限的list -->
+	<select id="getPowerIdByRoleId" resultType="int">
+		SELECT power_id FROM role_power WHERE role_id = #{roleId}
+	</select>
+	
+	<!-- 得到整张权限表 -->
+	<select id="getPowers" resultType="com.bluestar.teach.entity.Power">
+		SELECT power_id, power, power_name FROM power
+	</select>
+	
+	<!-- 通过班级id得到班级 -->
+	<select id="getClassByClassId" resultType="com.bluestar.teach.entity.Clazz">
+		SELECT class_id, class_name, course_id FROM class WHERE class_id = #{classId}
+	</select>
+	
+	<!-- 根据课程id得到课程 -->
+	<select id="getCoursesByCourseId" resultType="com.bluestar.teach.entity.Course">
+		SELECT c.course_id, c.course  FROM course c WHERE course_id = #{courseId}
+	</select>
+	
+	<!-- 得到班级 -->
+	<select id="getClassIdsByUserId" resultType="int">
+		SELECT class_id FROM user_class WHERE user_id= #{user_id}
+	</select>
+	
+	<!-- 得到所有班级 -->
+	<select id="getAllUsers" resultType="com.bluestar.teach.entity.User">
+		SELECT user_id, username, password, name, role_id, info_id, type_id FROM user
+	</select>
+	
+	<!-- 得到所有省份 -->
+	<select id="getProvinces" resultType="com.bluestar.teach.entity.Province">
+		SELECT p.id, p.name FROM province p
+	</select>
+	
+	<!-- 根据省份id得到城市 -->
+	<select id="getCitysByProvinceId" resultType="String">
+		SELECT DISTINCT city FROM university WHERE province_id = #{provinceId}
+	</select>
+	
+	<!-- 根据城市id得到学校 -->
+	<select id="getSchoolsByCity" resultType="com.bluestar.teach.entity.University">
+		SELECT id, name FROM university WHERE city = #{city}
+	</select>
+	
+	<!-- 得到整张课程表 -->
+	<select id="getAllcourses" resultType="com.bluestar.teach.entity.Course">
+		SELECT c.course_id, c.course FROM course c
+	</select>
+	
+	<!-- 根据学生userId得到他老师的userId -->
+	<select id="getHisTeacherUserId" resultType="int">
+		SELECT u.user_id  FROM user u INNER JOIN user_class uc ON u.user_id = uc.user_id
+		WHERE uc.class_id = (SELECT uc.class_id FROM user_class uc WHERE uc.user_id = #{userId}) AND role_id = 1
+	</select>
+	
+	<!-- 插入一个班级 -->
+	<insert id="insertClass">
+		INSERT INTO class(class_name, course_id) VALUES(#{className}, 1)
+	</insert>
+	
+	<!-- 根据用户id删除用户所在班级 -->
+	<delete id="deleteUserClass">
+		DELETE FROM user_class  WHERE user_id = #{userId}
+	</delete>
+	
+	<!-- 修改用户信息 -->
+	<update id="updateUser" >
+		UPDATE user
+		<set>
+		  <if test="userName != null">username = #{userName},</if>
+		  <if test="password != null">password = #{password},</if>
+		  <if test="name != null">name = #{name},</if>
+		  <if test="roleId != null">role_id = #{roleId},</if>
+		  <if test="typeId != null">type_id = #{typeId},</if>
+ 		</set>
+ 		WHERE user_id = #{userId}
+	</update>
+	
+	<!-- 根据班级名得到班级名 -->
+	<select id="getClassByClassName" resultType="com.bluestar.teach.entity.Clazz">
+		SELECT class_name FROM class WHERE class_name = #{className}
+	</select>
+
+	<select id="getAllClasses" resultType="com.bluestar.teach.entity.Clazz">
+        SELECT class_id, class_name, course_id FROM class WHERE class_id != 0
+    </select>
+	
+</mapper>

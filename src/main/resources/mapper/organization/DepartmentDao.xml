@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bluestar.organization.dao.DepartmentDao">
+
+    <sql id="t_dept_columns">
+        `dept_id`, `dept_code`, `dept_name`, `dept_p_code`, `dept_level`, `dept_order`, `dept_status`, `dept_remark`
+    </sql>
+
+    <!-- List<Department> listDepartmentByDeptCode(@Param("deptCode") String deptCode, @Param("all") boolean all); -->
+    <!-- 状态为 2 的时候是无效，所以查找的时候就不找无效的了 -->
+    <select id="listDepartmentByDeptCode" resultType="com.bluestar.organization.entity.Department">
+        SELECT
+        <include refid="t_dept_columns"/>
+        FROM t_dept
+        <where>
+            `dept_p_code` = #{deptCode}
+            <if test="!all">
+                AND `dept_status` != '2'
+            </if>
+        </where>
+        ORDER By `dept_order` ASC
+    </select>
+
+    <!-- List<Department> listDepartmentByDeptLevel(@Param("deptLevel") String deptLevel, @Param("deptPCode") String deptPCode,
+                                               @Param("all") boolean all); -->
+    <select id="listDepartmentByDeptLevel" resultType="com.bluestar.organization.entity.Department">
+        SELECT
+        <include refid="t_dept_columns"/>
+        FROM t_dept
+        <where>
+            `dept_level` = #{deptLevel}
+            <if test="deptPCode != null">
+                AND `dept_p_code` = #{deptPCode}
+            </if>
+            <if test="!all">
+                AND `dept_status` != '2'
+            </if>
+        </where>
+        ORDER BY `dept_order` ASC
+    </select>
+
+    <!-- int saveDepartment(Department department); -->
+    <insert id="saveDepartment">
+        INSERT ignore INTO t_dept(<include refid="t_dept_columns"/>)
+        VALUES(#{deptId}, #{deptCode}, #{deptName}, #{deptPCode}, #{deptLevel}, #{deptOrder}, #{deptStatus},
+        #{deptRemark})
+    </insert>
+
+    <!-- int removeDepartment(String DeptId); -->
+    <update id="removeDepartment">
+        UPDATE `t_dept`
+        SET `dept_status` = 2
+        WHERE `dept_id` = #{deptId}
+    </update>
+
+    <!-- int updateDepartment(Department department); -->
+    <update id="updateDepartment">
+        UPDATE `t_dept`
+        <set>
+            <if test="deptCode != null">
+                dept_code = #{deptCode},
+            </if>
+            <if test="deptName != null">
+                dept_name = #{deptName},
+            </if>
+            <if test="deptPCode != null">
+                dept_p_code = #{deptPCode},
+            </if>
+            <if test="deptLevel != null">
+                dept_level = #{deptLevel},
+            </if>
+            <if test="deptStatus != null">
+                dept_status = #{deptStatus},
+            </if>
+            <if test="deptRemark != null">
+                dept_remark = #{deptRemark},
+            </if>
+        </set>
+        WHERE `dept_id` = #{deptId}
+    </update>
+
+    <!-- int updateDepartmentPCode(@Param("oldDeptPCode") String oldDeptPCode,
+    @Param("newDeptPCode") String newDeptPCode); -->
+    <update id="updateDepartmentPCode">
+        UPDATE `t_dept`
+        SET `dept_p_code` = #{newDeptPCode}
+        WHERE `dept_p_code` = #{oldDeptPCode}
+    </update>
+
+    <!-- int countDepartmentCode(String deptCode); -->
+    <select id="countDepartmentCode" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM `t_dept`
+        WHERE `dept_code` = #{deptCode}
+    </select>
+
+    <!-- int saveUserInDepartment(UserDepartment userDepartment); -->
+    <insert id="saveUserInDepartment">
+        INSERT INTO `t_user_dept` (`user_dept_id`, `dept_code`, `user_id`, `user_dept_order`)
+        VALUES (#{userDeptId}, #{deptCode}, #{userId}, #{userDeptOrder});
+    </insert>
+
+    <!-- List<UserDepartment> listUsersInDepartment(String deptCode); -->
+    <select id="listUsersInDepartment" resultType="com.bluestar.organization.entity.UserDepartment">
+        SELECT
+            d.`user_dept_id`,
+            d.`dept_code`,
+            d.`user_id`,
+            d.`user_dept_order`,
+            u.`username`,
+            u.`name`
+        FROM `t_user_dept` d, `user` u
+        WHERE d.`user_id` = u.`user_id` AND d.`dept_code` = #{deptCode}
+    </select>
+
+    <!-- int updateDepartmentCode(@Param("oldDeptCode") String oldDeptCode, @Param("newDeptCode") String newDeptCode); -->
+    <update id="updateDepartmentCode">
+        UPDATE `t_user_dept`
+        SET `dept_code` = #{newDeptCode}
+        WHERE `dept_code` = #{oldDeptCode}
+    </update>
+
+    <!-- int updateUserInUserDepartment(UserDepartment userDepartment); -->
+    <update id="updateUserInUserDepartment">
+        UPDATE `t_user_dept`
+        SET `dept_code` = #{deptCode}, `user_dept_order` = #{userDeptOrder}
+        WHERE `user_dept_id` = #{userDeptId}
+    </update>
+
+    <!-- int removeUserInUserDepartment(String userDepartmentId); -->
+    <delete id="removeUserInUserDepartment">
+        DELETE FROM `t_user_dept`
+        WHERE `user_dept_id` = #{userDeptId}
+    </delete>
+
+    <!-- List<User> listUsers(String deptCode); -->
+    <select id="listUsers" resultType="com.bluestar.teach.entity.User">
+        SELECT
+            u.`user_id`,
+            u.`username`,
+            u.`name`
+        FROM `user` u
+        WHERE u.`user_id` NOT IN (SELECT t.`user_id`
+                                  FROM `t_user_dept` t
+                                  WHERE t.`dept_code` = #{deptCode})
+    </select>
+
+    <!-- int countUserDept(UserDepartment userDepartment); -->
+    <select id="countUserDept" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM `t_user_dept`
+        WHERE `dept_code` = #{deptCode} AND `user_id` = #{userId}
+    </select>
+</mapper>

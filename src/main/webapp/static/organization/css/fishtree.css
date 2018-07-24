@@ -1,0 +1,23 @@
+#tree {
+    width: 100%;
+    overflow: auto;
+    margin-bottom: 10px;
+}
+
+#tree p {
+    font-size: 16px;
+    width: max-content;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+#tree p:hover {
+    cursor: pointer;
+}
+
+#tree .active {
+    color: #428BCA;
+    font-weight: bold;
+}

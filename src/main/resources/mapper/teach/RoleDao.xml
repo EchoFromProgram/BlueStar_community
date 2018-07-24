@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.bluestar.teach.dao.RoleDao">
+	
+	<!-- 得到角色名和他拥有的权限名 -->
+	<select id="getRolesPowerName" resultMap="role">
+		SELECT  r.role, r.role_id, p.power_name, p.power_id FROM role r INNER JOIN role_power rp ON r.role_id = rp.role_id 
+		INNER JOIN power p ON rp.power_id = p.power_id
+	</select>
+	
+	<!-- 角色名和权限名的映射关系 -->
+	<resultMap type="com.bluestar.teach.entity.Role" id="role">
+		<id property="roleId" column="role_id"/>
+		<result property="role" column="role"/>
+		<collection property="powerNames" ofType="com.bluestar.teach.entity.RolePowerName">
+            <result property="powerName" column="power_name" javaType="java.lang.String" />
+            <result property="powerId" column="power_id" />
+        </collection>
+	</resultMap>
+
+	<!-- 根据角色id删除权限 -->
+	<delete id="deleteRolePowerByRoleId">
+		DELETE FROM role_power WHERE role_id = #{roleId}
+	</delete>
+
+	<!-- 插入一个角色拥有的权限id -->
+	<insert id="insertRolePower">
+		INSERT INTO role_power(role_id, power_id) VALUES
+		<foreach collection="powerIds" item="powerId" separator=",">
+			(#{roleId}, #{powerId})
+		</foreach>
+	</insert>
+	
+	<!-- 创建一个角色 -->
+	<insert id="insertRole" useGeneratedKeys="true" keyProperty="roleId">
+		INSERT INTO role(role) VALUES(#{role})
+	</insert>
+	
+	<!-- 联表删除角色 -->
+	<delete id="deleteRole">
+		DELETE r, rp FROM role r LEFT JOIN role_power rp ON r.role_id = rp.role_id
+		WHERE r.role_id = #{roleId}
+	</delete>
+
+
+</mapper>

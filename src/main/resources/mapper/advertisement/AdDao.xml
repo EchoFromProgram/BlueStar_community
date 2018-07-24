@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace = "com.bluestar.advertisement.dao.AdDao">
+    <sql id="adColumn">
+        ad_id, ad_title, ad_picture, ad_create_time, ad_create_user, ad_status, ad_order, ad_link_url,
+        enclosure_name, enclosure_path, file_size, ext_name
+    </sql>
+
+    <!--插入一个广告-->
+    <insert id="insertAd">
+        INSERT INTO t_ad
+                VALUES
+                    (#{adId}, #{adTitle}, #{adPicture}, NOW(), #{adCreateUser}, 1 , #{adOrder}, #{adLinkUrl})
+    </insert>
+
+    <!--插入一个附件-->
+    <insert id="insertEn">
+        INSERT INTO t_enclosure
+               VALUES
+                   (#{enclosureId}, #{businessId}, #{busiConId}, #{enclosureName}, #{enclosurePath},
+                    #{enclosureOrder}, #{fileSize}, #{extName}, #{enclosureUrl})
+    </insert>
+
+    <!--根据id修改广告-->
+    <update id="updateAdById">
+        UPDATE t_ad
+        <set>
+            <if test="adTitle != null"> ad_title = #{adTitle}, </if>
+            <if test="adPicture != null"> ad_picture = #{adPicture}, </if>
+            <if test="adCreateUser != null"> ad_create_user = #{adCreateUser}, </if>
+            <if test="adStatus != null"> ad_status = #{adStatus}, </if>
+            <if test="adOrder != null"> ad_order = #{adOrder}, </if>
+            <if test="adLinkUrl != null"> ad_link_url = #{adLinkUrl}, </if>
+        </set>
+        WHERE ad_id = #{adId}
+    </update>
+
+    <!--根据图片id更新附件-->
+    <update id="updateEnById">
+        UPDATE t_enclosure
+        <set>
+            <if test="enclosure.busiConId != null"> busi_con_id = #{enclosure.busiConId}, </if>
+            <if test="enclosure.enclosureName != null"> enclosure_name = #{enclosure.enclosureName}, </if>
+            <if test="enclosure.enclosurePath != null"> enclosure_path = #{enclosure.enclosurePath}, </if>
+            <if test="enclosure.fileSize != null"> file_size = #{enclosure.fileSize}, </if>
+            <if test="enclosure.extName != null"> ext_name = #{enclosure.extName}, </if>
+            <if test="enclosure.enclosureUrl != null"> enclosure_url = #{enclosure.enclosureUrl}, </if>
+        </set>
+        WHERE busi_con_id = #{pictureId}
+    </update>
+
+    <!--查询广告-->
+    <select id="queryAdsByStatusAndTitle" resultType="com.bluestar.advertisement.vo.AdVo">
+        SELECT
+            <include refid="adColumn" />
+                    FROM t_ad ad, t_enclosure en
+        <where>
+            <if test="title != null"> and ad_title like '%${title}%'</if>
+            <if test="status != null"> and ad_status = #{status} </if>
+            AND business_id = 1 AND ad.ad_picture = en.busi_con_id
+        </where>
+        ORDER BY ad_order ASC, ad_create_time DESC
+
+    </select>
+
+    <!--将广告的状态置为无效-->
+    <update id="deleteAdById">
+        UPDATE t_ad SET ad_status = 3, ad_order = 999 WHERE ad_id = #{adId}
+    </update>
+
+
+    <select id="getUpdateData" resultType="com.bluestar.advertisement.vo.AdVo">
+        SELECT
+        <include refid="adColumn" />
+        FROM t_ad ad, t_enclosure en
+        where ad_id = #{adId} AND business_id = 1 AND ad.ad_picture = en.busi_con_id
+
+    </select>
+
+
+
+
+
+</mapper>

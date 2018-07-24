@@ -1,0 +1,31 @@
+.info-label{
+    background-color: #f3f5f7;
+    padding: 20px;
+}
+.info-detail{
+    padding: 20px;
+    border-bottom: 1px solid #aaaaaa;
+}
+.line{
+    padding: 10px;
+}
+.question-title{
+    margin-bottom: 20px;
+}
+.question-detail{
+    margin-bottom: 30px;
+}
+.quiz-list{
+    background-color: #f3f5f7;
+    padding: 20px;
+    margin: 5px;
+}
+
+.ue-container{
+    width: 100%;
+    margin: 0 auto;
+    margin-top: 3%;
+    padding: 20px 40px;
+    border: 1px solid #ddd;
+    background: #fff;
+}

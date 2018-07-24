@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bluestar.teach.dao.SignDao">
+
+	<!-- 插入一条签到状态 -->
+	<insert id="insertIntoSign" >
+		INSERT INTO sign(class_id,  user_id, course_id, date, status, reason)
+		VALUES(#{classId}, #{userId}, #{courseId}, #{date}, #{status}, #{reason})	
+	</insert>
+
+	<!-- 根据用户id查询签到情况 -->
+	<select id="getSignsByUserId" resultType="com.bluestar.teach.entity.Sign">
+		SELECT	sign_id, class_id,  user_id, course_id, date, status, reason
+		FROM sign WHERE user_id = #{userId}
+	</select>
+	
+	<!-- 根据班级id查询学生签到情况 -->
+	<select id="getSignsByClassIdAndRoleId" resultType="com.bluestar.teach.entity.Sign">
+		SELECT	s.sign_id, s.class_id,  s.user_id, s.course_id, s.date, s.status, s.reason
+		FROM sign s inner join user u on s.user_id = u.user_id
+		WHERE class_id = #{classId} and role_id = #{roleId}
+	</select>
+	
+	<!-- 根据用户id查询签到情况 -->
+	<select id="getAllSigns" resultType="com.bluestar.teach.entity.Sign">
+		SELECT	sign_id, class_id,  user_id, course_id, date, status, reason 
+		FROM sign
+	</select>
+	
+	<!-- 根据班级id得到老师和学生的签到情况 -->
+	<select id="getSignsByClassId" resultType="com.bluestar.teach.entity.Sign">
+		SELECT DISTINCT u.name,  c.class_name,  cr.course , s.date, s.status, s.reason 
+		FROM user u, class c, course cr, sign s WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.course_id = cr.course_id AND s.class_id = #{classId}
+	</select>
+	
+	<!-- 根据班级id和角色id得到签到数据 -->
+	<select id="getSignDatasByClassIdAndRoleId" resultType="com.bluestar.teach.entity.SignData">
+		SELECT DISTINCT u.name,  c.class_name,  cr.course , s.date, s.status, s.reason, s.class_id
+		FROM user u, class c, course cr, sign s WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.course_id = cr.course_id AND s.class_id = #{classId} AND u.role_id = #{roleId}
+	</select>
+	
+	<!-- 根据课程查询签到数据 -->
+	<select id="getSignDatasByCourseId" resultType="com.bluestar.teach.entity.SignData">
+		SELECT DISTINCT u.name,  c.class_name,  cr.course , s.date, s.status, s.reason, s.class_id
+		FROM user u, class c, course cr, sign s WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.course_id = cr.course_id AND s.course_id = #{courseId}
+	</select>
+	
+	<!-- 根据用户id得到签到数据 -->
+	<select id="getSignDatasByUserId" resultType="com.bluestar.teach.entity.SignData">
+		SELECT DISTINCT u.name,  c.class_name,  cr.course , s.date, s.status, s.reason, s.class_id
+		FROM user u, class c, course cr, sign s WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.course_id = cr.course_id AND s.user_id = #{userId}
+	</select>
+	
+	<!-- 根据班级id得到签到数据 -->
+	<select id="getSignDatasByClassId" resultType="com.bluestar.teach.entity.SignData">
+		SELECT DISTINCT u.name,  c.class_name,  cr.course , s.date, s.status, s.reason, s.class_id
+		FROM user u, class c, course cr, sign s WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.course_id = cr.course_id AND s.class_id = #{classId}
+	</select>
+	
+	<!-- 得到所有签到情况 -->
+	<select id="getAllSignDatas" resultType="com.bluestar.teach.entity.SignData">
+		SELECT DISTINCT u.name,  c.class_name,  cr.course , s.date, s.status, s.reason, s.class_id
+		FROM user u,  class c, course cr, sign s WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.course_id = cr.course_id 
+	</select>
+	
+	<!-- 根据课程id得到签到数据 -->
+	<select id="getSignDatasByCourseIdAndRoleId" resultType="com.bluestar.teach.entity.SignData">
+		SELECT DISTINCT u.name,  c.class_name,  cr.course , s.date, s.status, s.reason, s.class_id 
+		FROM user u, class c, course cr, sign s WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.course_id = cr.course_id AND s.course_id = #{courseId} AND u.role_id = #{roleId}
+	</select>
+	
+	<!-- 根据课程id和班级id得到签到数据 -->
+	<select id="getSignDatasByClassIdAndCourseId" resultType="com.bluestar.teach.entity.SignData">
+		SELECT DISTINCT u.name,  c.class_name,  cr.course , s.date, s.status, s.reason, s.class_id
+		FROM user u, class c, course cr, sign s WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.course_id = cr.course_id AND s.class_id = #{classId} AND s.course_id = #{courseId}
+	</select>
+	
+	<!-- 根据班级id得到签到数据 -->
+	<select id="getSignDatasByHisClassId" resultType="com.bluestar.teach.entity.SignData">
+		SELECT DISTINCT u.name,  c.class_name,  cr.course , s.date, s.status, s.reason, s.class_id
+		FROM user u, class c, course cr, sign s WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.course_id = cr.course_id AND s.class_id IN (SELECT user_class.class_id FROM user_class WHERE user_class.user_id = #{userId})
+	</select>
+	
+	<!-- 根据班级id和课程得到签到数据 -->
+	<select id="getSignDatasByCourseIdAndHisClassId" resultType="com.bluestar.teach.entity.SignData">
+		SELECT DISTINCT u.name,  c.class_name,  cr.course , s.date, s.status, s.reason, s.class_id 
+		FROM user u, class c, course cr, sign s WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.course_id = cr.course_id AND s.class_id IN (SELECT user_class.class_id FROM user_class WHERE user_class.user_id = #{userId})
+		AND s.course_id = #{courseId}
+	</select>
+
+	<select id="signIsExisted" resultType="java.lang.Integer">
+		SELECT COUNT(1)
+		FROM sign
+		WHERE user_id = #{userId} AND course_id = #{courseId}
+	</select>
+	
+	
+     <!-- 根据班级和课程得到签到成功的百分比(学生) -->
+	<select id="getStudentSignSuccessNumber" resultType="double">
+		SELECT ROUND(T1.success/T2.total,2)
+    	FROM 
+     	(SELECT COUNT(*) AS success
+         FROM sign INNER JOIN user ON sign.user_id = user.user_id WHERE sign.status = 0 AND sign.class_id = #{classId} AND sign.course_id = #{courseId} AND user.role_id = 2)  T1,
+     	(SELECT COUNT(*) AS total
+       	FROM user u INNER JOIN user_class uc ON u.user_id = uc.user_id 
+       	WHERE u.role_id = 2 AND uc.class_id = #{classId})T2
+     </select>
+     
+     <!-- 根据班级和课程得到签到迟到的百分比(学生) -->
+	<select id="getStudentSignLateNumber" resultType="double">
+		SELECT ROUND(T1.success/T2.total,2)
+    	FROM 
+     	(SELECT COUNT(*) AS success
+         FROM sign INNER JOIN user ON sign.user_id = user.user_id WHERE sign.status = 1 AND sign.class_id = #{classId} AND sign.course_id = #{courseId} AND user.role_id = 2)  T1,
+     	(SELECT COUNT(*) AS total
+       	FROM user u INNER JOIN user_class uc ON u.user_id = uc.user_id 
+       	WHERE u.role_id = 2 AND uc.class_id = #{classId})T2
+     </select>
+     
+      <!-- 根据班级和课程得到签到成功的百分比(老师) -->
+	<select id="getTeacherSignSuccessNumber" resultType="double">
+		SELECT ROUND(T1.success/T2.total,2)
+    	FROM 
+     	(SELECT COUNT(*) AS success
+         FROM sign INNER JOIN user ON sign.user_id = user.user_id WHERE sign.status = 0 AND sign.class_id = #{classId} AND sign.course_id = #{courseId} AND user.role_id = 1)  T1,
+     	(SELECT COUNT(*) AS total
+       	FROM user u INNER JOIN user_class uc ON u.user_id = uc.user_id 
+       	WHERE u.role_id = 1 AND uc.class_id = #{classId})T2
+     </select>
+     
+     <!-- 根据班级和课程得到签到迟到的百分比(老师) -->
+	<select id="getTeacherSignLateNumber" resultType="double">
+		SELECT ROUND(T1.success/T2.total,2)
+    	FROM 
+     	(SELECT COUNT(*) AS success
+         FROM sign INNER JOIN user ON sign.user_id = user.user_id WHERE sign.status = 1 AND sign.class_id = #{classId} AND sign.course_id = #{courseId} AND user.role_id = 1)  T1,
+     	(SELECT COUNT(*) AS total
+       	FROM user u INNER JOIN user_class uc ON u.user_id = uc.user_id 
+       	WHERE u.role_id = 1 AND uc.class_id = #{classId})T2
+     </select>
+     
+	
+     
+</mapper>

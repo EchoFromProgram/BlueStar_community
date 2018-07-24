@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 问卷 com.bluestar.teach.dao -->
+<mapper namespace="com.bluestar.teach.dao.NewQuizDao">
+    <sql id="quiz_columns">
+        `quiz_id`, `class_id`, `user_id`, `course_id`, `date`, `quiz_detail_id`
+    </sql>
+
+    <sql id="quiz_detail">
+        SELECT
+            qd.quiz_detail_id,
+            qd.is_used,
+            qq.question
+        FROM quiz_detail qd INNER JOIN quiz_question qq ON qd.quiz_detail_id = qq.quiz_detail_id
+    </sql>
+
+    <resultMap id="quiz_detail_map" type="com.bluestar.teach.entity.QuizDetail">
+        <id property="quizDetailId" column="quiz_detail_id" />
+        <result property="isUsed" column="is_used" />
+        <collection property="questions" ofType="com.bluestar.teach.entity.QuizQuestion">
+            <result property="question" column="question" />
+        </collection>
+    </resultMap>
+
+    <select id="getQuizByUserIdOrCourseId" resultType="java.util.Map">
+        SELECT
+        q.quiz_id quizId,
+        q.date,
+        q.quiz_detail_id,
+        c.class_name,
+        cr.course,
+        u.name
+        FROM quiz q, class c, course cr, `user` u
+        <where>
+            q.user_id = #{userId}
+            <if test="courseId != null">
+                AND q.course_id = #{courseId}
+            </if>
+        </where>
+        AND q.class_id = c.class_id AND q.course_id = cr.course_id AND q.user_id = u.user_id
+        ORDER BY q.date DESC
+    </select>
+
+    <select id="getQuizById" resultType="com.bluestar.teach.entity.Quiz">
+        SELECT <include refid="quiz_columns"/>
+        FROM quiz
+        WHERE quiz_id = #{quizId}
+    </select>
+
+    <select id="getQuestionsByQuizDetailId" resultType="string">
+        SELECT question
+        FROM quiz_question
+        WHERE quiz_detail_id = #{quizDetailId}
+    </select>
+
+    <select id="getAnswersByQuizId" resultType="string">
+        SELECT quiz_answer
+        FROM quiz_answer
+        WHERE quiz_id = #{quizId}
+    </select>
+
+    <select id="getQuizByClassIdOrCourseId" resultType="java.util.Map">
+        SELECT
+        q.quiz_id quizId,
+        q.date,
+        q.quiz_detail_id,
+        c.class_name,
+        cr.course,
+        u.name
+        FROM quiz q, class c, course cr, `user` u
+        WHERE q.class_id IN (SELECT uc.class_id
+        FROM user_class uc
+        <where>
+            1 = 1
+            <if test="classId != null">
+                AND uc.class_id = #{classId}
+            </if>
+            )
+            <if test="courseId != null">
+                AND q.course_id = #{courseId}
+            </if>
+        </where>
+        AND q.class_id = c.class_id AND q.course_id = cr.course_id AND q.user_id = u.user_id
+        ORDER BY q.date DESC
+    </select>
+
+    <select id="getQuizes" resultMap="quiz_detail_map">
+        <include refid="quiz_detail" />
+        ORDER BY qd.quiz_create_date DESC
+    </select>
+
+    <select id="getQuiz" resultMap="quiz_detail_map">
+        <include refid="quiz_detail"/>
+        WHERE qd.is_used = 1;
+    </select>
+
+    <select id="getQuizByHisClassIdOrCourseId" resultType="java.util.Map">
+        SELECT
+            q.quiz_id quizId,
+            q.date,
+            q.quiz_detail_id,
+            c.class_name,
+            cr.course,
+            u.name
+        FROM quiz q, class c, course cr, `user` u
+        WHERE q.class_id IN (SELECT uc.class_id
+                             FROM user_class uc
+        <where>
+            uc.user_id = #{userId})
+            <if test="courseId != null">
+                AND q.course_id = #{courseId}
+            </if>
+        </where>
+              AND q.class_id = c.class_id AND q.course_id = cr.course_id AND q.user_id = u.user_id
+        ORDER BY q.date DESC
+    </select>
+
+    <select id="checkIfWritten" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM quiz
+        WHERE user_id = #{userId} AND course_id = #{courseId} AND quiz_detail_id = #{quizDetailId}
+    </select>
+
+    <insert id="insertQuiz" useGeneratedKeys="true" keyProperty="quizId">
+        INSERT INTO quiz(class_id, user_id, course_id, date, quiz_detail_id)
+        VALUES(#{classId}, #{userId}, #{courseId}, #{date}, #{quizDetailId})
+    </insert>
+
+    <insert id="insertQuizAnswer">
+        INSERT INTO quiz_answer(quiz_answer, quiz_id)
+        VALUES
+        <foreach collection="answers" item="answer" separator=",">
+            (#{answer}, #{quizId})
+        </foreach>
+    </insert>
+
+    <insert id="insertQuizDetail" useGeneratedKeys="true" keyProperty="quizDetailId">
+        INSERT INTO quiz_detail(quiz_create_date, quiz_update_date, is_used)
+        VALUES(NOW(), NOW(), #{isUsed})
+    </insert>
+
+    <insert id="insertQuizQuestion">
+        INSERT INTO quiz_question(question, quiz_detail_id)
+        VALUES
+        <foreach collection="questions" item="question" separator=",">
+            (#{question.question}, #{quizDetailId})
+        </foreach>
+    </insert>
+
+    <update id="updateUsedQuiz">
+        UPDATE quiz_detail SET is_used = #{isUsed}
+        <where>
+            <if test="id != null">
+                quiz_detail_id = #{id}
+            </if>
+        </where>
+    </update>
+</mapper>

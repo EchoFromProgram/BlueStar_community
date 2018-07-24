@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bluestar.information.dao.InformationDao">
+    <sql id="all_columns_of_information">
+        `information_id`, `information_title`, `information_content`, `information_enclosure`,
+        `information_author`, `information_publish_time`,`information_create_time`,
+        `information_create_user`, `information_statu`, `information_order`
+    </sql>
+
+    <select id="getInformationById" resultType="com.bluestar.information.entity.Information">
+        SELECT
+            <include refid="all_columns_of_information"/>
+        FROM t_information
+        WHERE information_id = #{informationId}
+    </select>
+
+    <select id="listInformationByStatu" resultType="com.bluestar.information.entity.Information">
+        SELECT
+            <include refid="all_columns_of_information"/>
+        FROM t_information
+        <where>
+            <if test="informationStatu != null"> AND information_statu = #{informationStatu}</if>
+            <if test="informationTitle != null"> AND information_title LIKE '%${informationTitle}%'</if>
+        </where>
+    </select>
+
+    <insert id="saveInformation" parameterType="com.bluestar.information.entity.Information">
+        INSERT IGNORE INTO
+            t_information(<include refid="all_columns_of_information"/>)
+        VALUES (#{informationId}, #{informationTitle}, #{informationContent}, #{informationEnclosure},
+        #{informationAuthor}, #{informationPublishTime}, #{informationCreateTime},
+        #{informationCreateUser}, #{informationStatu}, #{informationOrder})
+    </insert>
+
+    <update id="updateInformation" parameterType="com.bluestar.information.entity.Information">
+        UPDATE t_information
+        <set>
+            <if test="informationTitle != null">information_title = #{informationTitle},</if>
+            <if test="informationContent != null">information_content = #{informationContent},</if>
+            <if test="informationEnclosure != null">information_enclosure = #{informationEnclosure},</if>
+            <if test="informationAuthor != null">information_author = #{informationAuthor},</if>
+            <if test="informationCreateUser != null">information_create_user = #{informationCreateUser},</if>
+            <if test="informationStatu != null">information_statu = #{informationStatu},</if>
+            <if test="informationOrder != null">information_order = #{informationOrder},</if>
+        </set>
+        WHERE information_id = #{informationId}
+    </update>
+
+    <delete id="removeInformatin">
+        DELETE FROM t_information WHERE information_id = #{informationId}
+    </delete>
+
+    <select id="listInformationByTitle" resultType="com.bluestar.information.entity.Information">
+        SELECT
+            <include refid="all_columns_of_information"/>
+        FROM t_information
+        WHERE information_title LIKE '%${informationTitle}%'
+    </select>
+
+    <update id="updateStatuByid">
+        UPDATE t_information
+        <set>
+            <if test="statu != null">information_statu = #{statu},</if>
+        </set>
+        WHERE information_id = #{informationId}
+    </update>
+</mapper>

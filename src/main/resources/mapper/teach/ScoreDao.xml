@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bluestar.teach.dao.ScoreDao">
+	<!-- 插入成绩 -->
+	<insert id="insertScore" >
+		INSERT INTO score(class_id, user_id, course_id, date, score)
+		VALUES(#{classId}, #{userId}, #{courseId}, #{date}, #{score})
+	</insert>
+	 
+	<!-- 根据班级id查询整个班级的成绩 -->
+	<select id="getScoresByClassId" resultType="com.bluestar.teach.entity.ScoreData">
+		SELECT s.user_id, s.score_id, s.status, s.score, s.class_id, s.date, u.name, c.class_name FROM score s,user u, class c 
+		WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.class_id = #{classId}
+	</select>
+	
+	<!-- 查询一个学生的成绩 -->
+	<select id="getScoreByUserId" resultType="com.bluestar.teach.entity.Score">
+		SELECT quiz_id, class_id, user_id, course_id, date, score 
+		FROM score WHERE user_id = #{userId}
+	</select>
+	
+	<!-- 得到所有成绩 -->
+	<select id="getAllScores" resultType="com.bluestar.teach.entity.Score">
+		SELECT quiz_id, class_id, user_id, course_id, date, score FROM score
+	</select>
+	
+	<!-- 根据成绩id更新成绩 -->
+	<update id="updateScoreByScoreId" >
+		UPDATE score
+		<set>
+		  <if test="date != null">date = #{date},</if>
+		  <if test="score != null">score = #{score},</if>
+ 		</set>
+ 		WHERE score_id = #{scoreId}
+	</update>
+	
+	<!-- 根据成绩id删除成绩 -->
+	<delete id="deleteScoreByScoreId">
+		DELETE FROM score WHERE score_id = #{scoreId}
+	</delete>
+	
+	<!-- 根据用户id得到成绩数据-->
+	<select id="getScoreDatasByUserId" resultType="com.bluestar.teach.entity.ScoreData">
+		SELECT  s.user_id, s.score_id, s.status, s.score, s.class_id, s.date, u.name, c.class_name FROM score s,user u, class c 
+		WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND u.user_id = #{userId}
+	</select>
+	
+	<!-- 根据班级和阶段得到成绩数据 -->
+	<select id="getScoreDatasByClassIdAndStatus" resultType="com.bluestar.teach.entity.ScoreData">
+		SELECT  s.user_id, s.score_id, s.status, s.score, s.class_id, s.date, u.name, c.class_name FROM score s,user u, class c 
+		WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND c.class_id = #{classId} AND s.status = #{status}
+	</select>
+	
+	<!-- 得到所有成绩数据 -->
+	<select id="getAllScoreDatas" resultType="com.bluestar.teach.entity.ScoreData">
+		SELECT s.user_id, s.score_id, s.status, s.score, s.class_id, s.date, u.name, c.class_name FROM score s,user u, class c 
+		WHERE s.user_id = u.user_id AND s.class_id = c.class_id
+	</select>
+	
+	<!-- 根据阶段查询成绩 -->
+	<select id="getScoreDatasByStatus" resultType="com.bluestar.teach.entity.ScoreData">
+		SELECT s.user_id, s.score_id, s.status, s.score, s.class_id, s.date, u.name, c.class_name FROM score s,user u, class c 
+		WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.status = #{status}
+	</select>
+	
+	<!-- 根据班级查成绩 -->
+	<select id="getScoreDatasByHisClassId" resultType="com.bluestar.teach.entity.ScoreData">
+		SELECT s.user_id, s.score_id, s.status, s.score, s.class_id, s.date, u.name, c.class_name FROM score s,user u, class c 
+		WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.class_id IN (SELECT user_class.class_id FROM user_class WHERE user_class.user_id = #{userId})
+	</select>
+	
+	<!-- 根据课程和班级查成绩-->
+	<select id="getScoreDatasByStatusAndHisClassId" resultType="com.bluestar.teach.entity.ScoreData">
+		SELECT s.user_id, s.score_id, s.status, s.score, s.class_id, s.date, u.name, c.class_name FROM score s,user u, class c 
+		WHERE s.user_id = u.user_id AND s.class_id = c.class_id AND s.status = #{status} AND s.class_id IN (SELECT user_class.class_id FROM user_class WHERE user_class.user_id = #{userId})
+	</select>
+	
+	<!-- 根据班级id得到该班级的用户 -->
+	<select id="getUsersByClassId" resultType="com.bluestar.teach.entity.User">
+		SELECT u.name, u.user_id FROM user u, user_class uc WHERE u.user_id = uc.user_id AND uc.class_id = #{classId} AND u.type_id = 1
+	</select>
+	
+	<!-- 批量插入成绩 -->
+	<insert id="insertScores">
+		INSERT INTO score(class_id, user_id,  status, date, score) VALUES
+		<foreach collection="scores" item="score" separator=",">
+			(#{score.classId}, #{score.userId}, #{score.status}, #{score.date}, #{score.score})
+		</foreach>
+	</insert>
+	
+	<!-- 得到合格人数 -->
+	<select id="getPassNumberForTeacher" resultType="double">
+		SELECT ROUND(T1.pass/T2.total,2)
+    	FROM 
+     	(SELECT COUNT(*) AS pass
+        FROM score 
+       	<where>
+       		score.score >= 60
+       		<if test="classId != null">
+       		AND score.class_id = #{classId} 
+       		</if>
+       		<if test="classId == null">
+       		AND score.class_id in(SELECT class_id FROM user_class WHERE user_id =#{userId})
+       		</if>
+       		<if test="status != null">
+       		AND score.status = #{status}
+       		</if>	
+       	</where>) T1,
+     	(SELECT COUNT(*) AS total
+       	FROM score
+       	<where>
+       		<if test="classId != null">
+       		score.class_id = #{classId} 
+       		</if>
+       		<if test="status != null">
+       		AND score.status = #{status}
+       		</if>	
+       	</where>)T2;
+	</select>
+	
+	<select id="getPassNumberForAdmin" resultType="double">
+		SELECT ROUND(T1.pass/T2.total,2)
+    	FROM 
+     	(SELECT COUNT(*) AS pass
+        FROM score 
+       	<where>
+       		score.score >= 60
+       		<if test="classId != null">
+       		AND score.class_id = #{classId} 
+       		</if>
+       		<if test="status != null">
+       		AND score.status = #{status}
+       		</if>	
+       	</where>) T1,
+     	(SELECT COUNT(*) AS total
+       	FROM score
+       	<where>
+       		<if test="classId != null">
+       		score.class_id = #{classId} 
+       		</if>
+       		<if test="status != null">
+       		AND score.status = #{status}
+       		</if>	
+       	</where>)T2;
+	</select>
+	
+	
+	
+</mapper>
